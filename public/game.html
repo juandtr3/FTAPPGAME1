@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>MAURICIOGAME - Juego</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+       
+
+       
+        /* Estilos para la pantalla de juego */
+        .game-container {
+            /* Ocultar la pantalla de juego por defecto */
+            height: 100%;
+            background-image: url('https://img.freepik.com/vector-premium/patron-abstracto-geometrico_153454-2906.jpg');
+            background-size: cover;
+            background-position: center;
+            position: relative; /* Agregamos posición relativa */
+            z-index: 1; /* Aseguramos que esté sobre el fondo */
+        }
+        .game-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Fondo gris semi-transparente */
+            z-index: -1; /* Lo ponemos detrás de los elementos de la mesa */
+        }
+
+        .container {
+            height: calc(100% - 120px); /* Ajuste para evitar superposición */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 120px; /* Espacio para el menú */
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .cell {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .cell.disabled {
+            background-color: #888;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            position: absolute;
+            top: 20px;
+            width: 90%;
+            text-align: center;
+            display: none;
+            border-radius: 40px;
+            padding: 10px;
+            left: 12px;
+           
+        }
+
+        .alert-win {
+            background-color: greenyellow; /* Fondo verde para alerta de ganar */
+        }
+
+        .alert-lose {
+            background-color: red; /* Fondo rojo para alerta de perder */
+        }
+
+        .alertText {
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .info {
+            position: relative;
+            margin-top: -170px;
+            width: 100%;
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .player-info {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .clock {
+            font-size: 24px;
+            color: #fff;
+            margin-top: 10px;
+        }
+
+        .pass-turn-button {
+            position: absolute;
+            top: 620px;
+            right: 20px;
+            background-color: #ffcc00;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #exitButton {
+            position: absolute;
+            top: 20px;
+            left: 80%;
+            background-color: #ffcc00;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #resetButton {
+            background-color: transparent;
+        }
+
+        /* Colores de las fichas */
+        .blue-diamond {
+            background-color: blue;
+        }
+
+        .green-diamond {
+            background-color: green;
+        }
+
+        .yellow-gold {
+            background-color: yellow;
+        }
+
+        .red-gold {
+            background-color: red;
+        }
+
+        .red-ruby {
+            background-color: red;
+        }
+
+        .yellow-ruby {
+            background-color: yellow;
+        }
+
+        .green-trophy {
+            background-color: green;
+        }
+
+        .blue-trophy {
+            background-color: blue;
+        }
+
+        /* Indicador de turno */
+        .turn-indicator {
+            position: absolute;
+            top: 50px; /* Ajusta la posición vertical según sea necesario */
+            left: 50%; /* Centra horizontalmente */
+            transform: translateX(-50%); /* Centra horizontalmente */
+            background-color: rgba(255, 255, 255, 0.8); /* Fondo semi-transparente blanco */
+            padding: 10px 20px; /* Espaciado interno */
+            border-radius: 5px; /* Bordes redondeados */
+            font-size: 18px; /* Tamaño del texto */
+            font-weight: bold; /* Negrita */
+        }
+         /* Estilos del modal */
+         .modal {
+            display: none; /* El modal está oculto por defecto */
+            position: fixed;
+            z-index: 9999; /* Asegurar que el modal esté por encima de todo */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7); /* Fondo oscuro semi-transparente */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 10px;
+        }
+
+        /* Estilos para el contenido del modal */
+        .modal-content input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .modal-content button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .modal-content button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+<!-- Pantalla de juego -->
+<div class="game-container">
+    <div class="game-background"></div>
+    <button id="resetButton" onclick="handleReset()">Reiniciar Mesa</button>
+    <button id="exitButton" onclick="saveAndExit()">Salir</button>
+    <div class="turn-indicator" id="turnIndicator">ES TU TURNO (Ruperto)</div>
+    <div class="container">
+        <div class="row" id="diamond-row"></div>
+        <div class="row" id="gold-row"></div>
+        <div class="row" id="ruby-row"></div>
+        <div class="row" id="trophy-row"></div>
+    </div>
+    <div class="alert" id="alert"></div>
+    <div class="info" id="info"></div>
+    <!-- <div class="pass-turn-button" onclick="handlePassTurn()">Pasar Turno</div> -->
+</div>
+<audio id="clickSound">
+    <source src="./assents/collect-points-190037.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+<div id="pinModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h2>Introduce el PIN</h2>
+      <input type="password" id="pinInput" placeholder="Ingresa el PIN">
+      <button onclick="checkPIN()">Acceder</button>
+    </div>
+  </div>
+<!-- Agrega el botón de cierre al modal -->
+<div id="turnModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="hideTurnModal()">&times;</span> <!-- Botón de cierre -->
+        <h2>¡Es tu turno!</h2>
+        <p id="turnMessage"></p>
+    </div>
+</div>
+
+<div id="registerModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeRegisterModal()">&times;</span>
+        <h2>Registro de Nuevo Jugador</h2>
+        <input type="text" id="usernameInput" placeholder="Nombre de Usuario">
+        <input type="password" id="pinInput" placeholder="PIN">
+        <button onclick="registerPlayer()">Registrarse</button>
+    </div>
+</div>
+
+<script src="socket.io/socket.io.js"></script>
+<script>
+
+const openRegisterModal = () => {
+        const registerModal = document.getElementById('registerModal');
+        registerModal.style.display = 'block';
+    };
+
+    const closeRegisterModal = () => {
+        const registerModal = document.getElementById('registerModal');
+        registerModal.style.display = 'none';
+    };
+    
+
+//     const renderRow = (rowArray, rowId) => {
+//     const rowElement = document.getElementById(rowId);
+//     rowElement.innerHTML = '';
+//     rowArray.forEach((item, index) => {
+//         const cellElement = document.createElement('div');
+//         cellElement.className = `cell ${getColorClass(item)}`;
+//         cellElement.innerHTML = `<span>${item.emoji}</span>`;
+//         if (!item.available || disableBoard || (currentPlayer !== registeredPlayer)) {
+//             cellElement.classList.add('disabled');
+//         } else {
+//             cellElement.onclick = () => handlePress(item.emoji, index, rowArray, rowId);
+//         }
+//         rowElement.appendChild(cellElement);
+//     });
+// };
+
+    const registerPlayer = () => {
+    const username = document.getElementById('usernameInput').value;
+    const pin = document.getElementById('pinInput').value;
+
+    // Aquí puedes agregar la lógica para verificar la validez del nombre de usuario y el PIN
+    // Por ahora, simplemente simularemos agregar al jugador a la mesa con valores predeterminados
+
+    // Agregamos el nuevo jugador con un puntaje inicial
+    score[username] = 100000;
+
+    // Simulamos la adición del nuevo jugador a la mesa
+    takenRowsByPlayer[username] = [];
+    currentPlayer = username;
+
+    // Cerramos el modal de registro
+    closeRegisterModal();
+
+    // Actualizamos el estado del juego y renderizamos la mesa
+    renderGameState();
+    updateTurnIndicator();
+    startTurnTimer();
+    emitGameState();
+};
+
+   let currentPlayer = 'Ruperto';
+    let score = {'Ruperto': 100000, 'Juan': 100000, 'Mauricio': 100000};
+    let initialScore = {'Ruperto': 100000, 'Juan': 100000, 'Mauricio': 100000};
+    let turnCount = 1;
+    let timeLeft = 10;
+    let disableBoard = false;
+    let diamondStates = [
+        {available: true, emoji: '💎'},
+        {available: true, emoji: '💎'},
+        {available: true, emoji: '☀️'},
+        {available: true, emoji: '☀️'}
+    ];
+    let goldBarStates = [
+        {available: true, emoji: '💰'},
+        {available: true, emoji: '💰'},
+        {available: true, emoji: '🥇'},
+        {available: true, emoji: '🥇'}
+    ];
+    let rubyStates = [
+        {available: true, emoji: '🔴'},
+        {available: true, emoji: '🔴'},
+        {available: true, emoji: '🍀'},
+        {available: true, emoji: '🍀'}
+    ];
+    let trophyStates = [
+        {available: true, emoji: '💚'},
+        {available: true, emoji: '💚'},
+        {available: true, emoji: '🏆'},
+        {available: true, emoji: '🏆'}
+    ];
+    let takenRowsByPlayer = {Ruperto: [], Juan: [], Mauricio: []};
+    let takenCount = 0;
+
+    const startGame = () => {
+        // document.querySelector('.splash-container').style.display = 'none';
+        document.querySelector('.game-container').style.display = 'block';
+        renderGameState();
+        startTurnTimer();
+        
+    };
+const handlePassTurn = () => {
+    console.log('Pasando turno');
+    clearInterval(turnTimer); // Detener el temporizador antes de iniciar uno nuevo
+    currentPlayer = currentPlayer === 'Ruperto' ? 'Juan' : currentPlayer === 'Juan' ? 'Mauricio' : 'Ruperto';
+    timeLeft = 10;
+    renderGameState();
+    updateTurnIndicator(); // Actualiza el indicador de turno después de cambiar de jugador
+    startTurnTimer(); // Inicia el temporizador después de cambiar el jugador
+    emitGameState();
+    
+    // Mostrar el modal de cambio de turno
+    showTurnChangeModal(currentPlayer);
+};
+
+
+const showTurnModal = (player) => {
+    const turnModal = document.getElementById('turnModal');
+    const turnMessage = document.getElementById('turnMessage');
+    turnMessage.textContent = `Turno de ${player}`;
+    turnModal.style.display = 'block';
+};
+
+const hideTurnModal = () => {
+    const turnModal = document.getElementById('turnModal');
+    turnModal.style.display = 'none';
+};
+
+
+    // Función para abrir el modal
+const openModal = () => {
+  const modal = document.getElementById('pinModal');
+  modal.style.display = 'block';
+};
+
+// Función para cerrar el modal
+const closeModal = () => {
+  const modal = document.getElementById('pinModal');
+  modal.style.display = 'none';
+};
+
+// Función para verificar el PIN
+const checkPIN = () => {
+  const pinInput = document.getElementById('pinInput').value;
+  const correctPIN = '2538'; // PIN correcto
+
+  if (pinInput === correctPIN) {
+    closeModal(); // Cierra el modal si el PIN es correcto
+  } else {
+    alert('PIN incorrecto. Inténtalo de nuevo.');
+  }
+};
+
+    const resetGameTable = () => {
+        console.log('Reiniciando la mesa de juego');
+        currentPlayer = 'Ruperto';
+        turnCount = 1;
+        timeLeft = 10;
+        disableBoard = false;
+        takenCount = 0;
+
+        // Restablecer los estados de los diamantes
+        diamondStates = [
+            {available: true, emoji: '💎'},
+            {available: true, emoji: '💎'},
+            {available: true, emoji: '☀️'},
+            {available: true, emoji: '☀️'}
+        ];
+
+        // Restablecer los estados de las barras de oro
+        goldBarStates = [
+            {available: true, emoji: '💰'},
+            {available: true, emoji: '💰'},
+            {available: true, emoji: '🥇'},
+            {available: true, emoji: '🥇'}
+        ];
+
+        // Restablecer los estados de los rubíes
+        rubyStates = [
+            {available: true, emoji: '🔴'},
+            {available: true, emoji: '🔴'},
+            {available: true, emoji: '🍀'},
+            {available: true, emoji: '🍀'}
+        ];
+
+        // Restablecer los estados de los trofeos
+        trophyStates = [
+            {available: true, emoji: '💚'},
+            {available: true, emoji: '💚'},
+            {available: true, emoji: '🏆'},
+            {available: true, emoji: '🏆'}
+        ];
+         // Restablecer los estados de los diamantes
+    shuffleAndResetStates(diamondStates);
+
+    // Restablecer los estados de las barras de oro
+    shuffleAndResetStates(goldBarStates);
+
+    // Restablecer los estados de los rubíes
+    shuffleAndResetStates(rubyStates);
+
+    // Restablecer los estados de los trofeos
+    shuffleAndResetStates(trophyStates);
+
+        takenRowsByPlayer = {Ruperto: [], Juan: [], Mauricio: []};
+        renderGameState();
+        
+    };
+
+    const handleReset = () => {
+        resetGameTable();
+        saveGameState()
+    };
+
+    const renderGameState = () => {
+        console.log('Renderizando estado del juego');
+        renderBoard();
+        renderInfo();
+    };
+
+    const renderBoard = () => {
+        console.log('Renderizando tablero de juego');
+        renderRow(diamondStates, 'diamond-row');
+        renderRow(goldBarStates, 'gold-row');
+        renderRow(rubyStates, 'ruby-row');
+        renderRow(trophyStates, 'trophy-row');
+    };
+
+    const renderRow = (rowArray, rowId) => {
+        const rowElement = document.getElementById(rowId);
+        rowElement.innerHTML = '';
+        rowArray.forEach((item, index) => {
+            const cellElement = document.createElement('div');
+            cellElement.className = `cell ${getColorClass(item)}`;
+            cellElement.innerHTML = `<span>${item.emoji}</span>`;
+            if (!item.available || disableBoard) {
+                cellElement.classList.add('disabled');
+            } else {
+                cellElement.onclick = () => handlePress(item.emoji, index, rowArray, rowId);
+            }
+            rowElement.appendChild(cellElement);
+            
+        });
+    };
+
+    const getColorClass = (item) => {
+        if (item.emoji === '💎' || item.emoji === '☀️') return 'blue-diamond';
+        if (item.emoji === '💰' || item.emoji === '🥇') return 'yellow-gold';
+        if (item.emoji === '🔴' || item.emoji === '🍀') return 'red-ruby';
+        if (item.emoji === '💚' || item.emoji === '🏆') return 'green-trophy';
+    };
+
+    const renderInfo = () => {
+        const infoElement = document.getElementById('info');
+        infoElement.innerHTML = `
+                <div class="player-info">
+                    
+                    <p>Puntaje: ${score[currentPlayer]}</p>
+                    <p class="clock" id="clock">Tiempo restante: ${timeLeft}</p>
+                </div>
+            `;
+    };
+    
+
+    const playClickSound = () => {
+    const clickSound = document.getElementById('clickSound');
+    clickSound.currentTime = 0; // Reinicia el sonido si ya está reproduciéndose
+    clickSound.play();
+};
+
+//-----------------soket.io------------------------------
+const socket = io();
+
+     socket.on('initialState', (gameState) => {
+         currentPlayer = gameState.currentPlayer;
+         score = gameState.score;
+         diamondStates = gameState.diamondStates;
+         goldBarStates = gameState.goldBarStates;
+         rubyStates = gameState.rubyStates;
+         trophyStates = gameState.trophyStates;
+         takenRowsByPlayer = gameState.takenRowsByPlayer;
+         takenCount = gameState.takenCount;
+         timeLeft = gameState.timeLeft;
+         renderGameState();
+     });
+
+     socket.on('stateChanged', (gameState) => {
+         currentPlayer = gameState.currentPlayer;
+         score = gameState.score;
+         diamondStates = gameState.diamondStates;
+         goldBarStates = gameState.goldBarStates;
+         rubyStates = gameState.rubyStates;
+         trophyStates = gameState.trophyStates;
+         takenRowsByPlayer = gameState.takenRowsByPlayer;
+         takenCount = gameState.takenCount;
+         timeLeft = gameState.timeLeft;
+         renderGameState();
+     });
+
+     const emitGameState = () => {
+         const gameState = {
+             currentPlayer: currentPlayer,
+             score: score,
+             diamondStates: diamondStates,
+             goldBarStates: goldBarStates,
+             rubyStates: rubyStates,
+             trophyStates: trophyStates,
+             takenRowsByPlayer: takenRowsByPlayer,
+             takenCount: takenCount,
+             timeLeft: timeLeft
+         };
+         socket.emit('updateState', gameState);
+     };
+//-------------------------------------------------------
+
+const handlePress = (emoji, index, rowArray, rowId) => {
+    console.log('Manejando clic en celda');
+    if (!rowArray[index].available || disableBoard) return;
+
+    // Definir los puntos de ganancia y pérdida
+    const gainPoints = 20000;
+    const losePoints = 23000;
+
+    // Determinar la probabilidad de ganar en función de la posición de la ficha
+    let winProbability;
+    if (rowId === 'diamond-row' || rowId === 'ruby-row') {
+        // Mayor probabilidad de ganar para las fichas diamante y rubí
+        winProbability = 0.5;
+    } else {
+        // Menor probabilidad de ganar para las fichas de oro y trofeo
+        winProbability = 0.5;
+    }
+
+    // Determinar si la ficha gana o pierde de forma aleatoria basada en la probabilidad
+    const win = Math.random() < winProbability;
+
+    // Obtener el cambio en puntos
+    const change = win ? gainPoints : -losePoints;
+
+    // Actualizar el puntaje del jugador
+    score[currentPlayer] += change;
+
+    // Actualizar la ficha
+    rowArray[index].available = false;
+    rowArray[index].emoji = win ? '😀' : '😡';
+
+    // Actualizar la celda seleccionada
+    const cellElement = document.getElementById(rowId).children[index];
+    cellElement.innerHTML = `<span>${rowArray[index].emoji}</span>`;
+    cellElement.classList.add('disabled');
+
+    // Registrar la fila tomada por el jugador
+    takenRowsByPlayer[currentPlayer].push(rowArray);
+    takenCount++;
+
+    // Verificar si se han tomado todas las fichas
+    if (takenCount === 16) {
+        resetGameTable();
+    } else {
+        renderInfo(); // Actualizar información del jugador
+    }
+    playClickSound();
+    // Mostrar la alerta correspondiente
+    const message = `${currentPlayer} ${win ? 'ganó' : 'perdió'} ${Math.abs(change)} puntos.`;
+    showAlert(message, win ? 'win' : 'lose');
+
+    emitGameState(); // Emitir el nuevo estado del juego
+};
+
+
+
+    const showAlert = (message, type) => {
+        const alertElement = document.getElementById('alert');
+        alertElement.innerText = message;
+        alertElement.classList.add(type === 'win' ? 'alert-win' : 'alert-lose');
+        alertElement.classList.remove(type === 'win' ? 'alert-lose' : 'alert-win');
+        alertElement.style.display = 'block';
+        setTimeout(() => {
+            alertElement.style.display = 'none';
+        }, 3000);
+    };
+
+    const shuffleAndResetStates = (stateArray) => {
+        shuffleArray(stateArray);
+        stateArray.forEach(item => {
+            item.available = true;
+        });
+    };
+
+    const shuffleArray = (array) => {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    };
+
+    let turnTimer;
+
+    const startTurnTimer = () => {
+    timeLeft = 10; // Reiniciamos el tiempo restante a 10 segundos
+    updateClockDisplay(); // Actualizamos el display del reloj
+    clearInterval(turnTimer); // Limpiamos cualquier temporizador existente para evitar múltiples ejecuciones
+    turnTimer = setInterval(() => {
+        if (timeLeft > 0) {
+            timeLeft--;
+            updateClockDisplay(); // Actualizamos el display del reloj en cada intervalo
+        } else {
+            clearInterval(turnTimer); // Limpiamos el temporizador cuando se agota el tiempo
+            handlePassTurn(); // Pasamos el turno al finalizar el tiempo
+        }
+    }, 1000); // Intervalo de 1 segundo
+};
+
+
+    
+const updateClockDisplay = () => {
+    const clockElement = document.getElementById('clock');
+    clockElement.innerText = `Tiempo restante: ${timeLeft}`;
+};
+
+    const saveGameState = () => {
+        const gameState = {
+            currentPlayer: currentPlayer,
+            score: score,
+            diamondStates: diamondStates,
+            goldBarStates: goldBarStates,
+            rubyStates: rubyStates,
+            trophyStates: trophyStates,
+            takenRowsByPlayer: takenRowsByPlayer,
+            takenCount: takenCount
+        };
+
+        localStorage.setItem('gameState', JSON.stringify(gameState));
+        alert('Estado del juego guardado exitosamente.');
+    };
+
+    const saveAndExit = () => {
+        saveGameState(); // Guardar el estado del juego antes de salir
+        window.location.href = 'homepage.html'; // Redireccionar a la página de inicio
+    };
+
+    const loadGameState = () => {
+        const savedGameState = localStorage.getItem('gameState');
+        if (savedGameState) {
+            const gameState = JSON.parse(savedGameState);
+            currentPlayer = gameState.currentPlayer;
+            score = gameState.score;
+            diamondStates = gameState.diamondStates;
+            goldBarStates = gameState.goldBarStates;
+            rubyStates = gameState.rubyStates;
+            trophyStates = gameState.trophyStates;
+            takenRowsByPlayer = gameState.takenRowsByPlayer;
+            takenCount = gameState.takenCount;
+        }
+    };
+
+    const updateTurnIndicator = () => {
+        const turnIndicator = document.getElementById('turnIndicator');
+        turnIndicator.textContent = `ES TU TURNO (${currentPlayer})`;
+    };
+    const handleScoreChange = (player, change) => {
+    score[player] += change;
+    // Limitar el puntaje mínimo a 0
+    if (score[player] < 0) {
+        score[player] = 0;
+        }
+    };
+    const calculateScoreDifference = (player) => {
+        return score[player] - initialScore[player];
+    };
+    // const sincronizarEstadoJuego = () => {
+    //     window.addEventListener('storage', (event) => {
+    //         if (event.key === 'gameState') {
+    //             const gameState = JSON.parse(event.newValue);
+    //             currentPlayer = gameState.currentPlayer;
+    //             score = gameState.score;
+    //             diamondStates = gameState.diamondStates;
+    //             goldBarStates = gameState.goldBarStates;
+    //             rubyStates = gameState.rubyStates;
+    //             trophyStates = gameState.trophyStates;
+    //             takenRowsByPlayer = gameState.takenRowsByPlayer;
+    //             takenCount = gameState.takenCount;
+    //             renderGameState();
+    //         }
+    //     });
+    // };
+
+    window.onload = () => {
+    loadGameState();
+    renderGameState();
+    updateTurnIndicator(); // Mostrar el primer jugador al cargar el juego
+    startTurnTimer(); // Inicia el temporizador automáticamente al cargar el juego
+    openModal();
+    //   // Mostrar el modal de alerta de turno al cargar el juego
+    //   showTurnModal(currentPlayer);
+    openRegisterModal(); // Abre el modal de registro al cargar la página  
+   
+};
+    
+</script>
+</body>
+</html>
